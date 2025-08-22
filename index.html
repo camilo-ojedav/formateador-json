@@ -96,21 +96,41 @@
             }
 
             try {
-                // 1. Parse the string into a JavaScript object.
-                const parsedJson = JSON.parse(rawJson);
-                // 2. Stringify the object back to a formatted string.
+                // 1. Parse the string into a JavaScript object. Use 'let' to allow modification.
+                let parsedJson = JSON.parse(rawJson);
+                
+                // 2. NEW: Detect and parse nested JSON strings.
+                // This iterates over the keys of the parsed object.
+                for (const key in parsedJson) {
+                    // Check if the property belongs to the object and is a string.
+                    if (Object.hasOwnProperty.call(parsedJson, key) && typeof parsedJson[key] === 'string') {
+                        const value = parsedJson[key];
+                        // Check if the string looks like a JSON object or array.
+                        if ((value.startsWith('{') && value.endsWith('}')) || (value.startsWith('[') && value.endsWith(']'))) {
+                            try {
+                                // If it looks like JSON, try to parse it and replace the original string.
+                                parsedJson[key] = JSON.parse(value);
+                            } catch (e) {
+                                // If parsing the inner string fails, do nothing and leave it as a string.
+                                console.warn(`Could not parse nested JSON for key "${key}":`, e);
+                            }
+                        }
+                    }
+                }
+                
+                // 3. Stringify the (potentially modified) object back to a formatted string.
                 const formattedJson = JSON.stringify(parsedJson, null, 2);
                 
-                // 3. Set the text content of the code block. This escapes any HTML within the JSON values.
+                // 4. Set the text content of the code block.
                 jsonOutputCode.textContent = formattedJson;
 
-                // 4. Apply syntax highlighting using highlight.js
+                // 5. Apply syntax highlighting using highlight.js
                 hljs.highlightElement(jsonOutputCode);
                 
-                // 5. Ensure the error message is hidden on success.
+                // 6. Ensure the error message is hidden on success.
                 errorMessage.classList.add('hidden');
             } catch (error) {
-                // If JSON.parse() fails, catch the error.
+                // If the initial JSON.parse() fails, catch the error.
                 jsonOutputCode.textContent = '// Tu JSON formateado aparecerá aquí...'; // Clear output on error
                 // Display the specific error message to the user.
                 errorText.textContent = `Error en el JSON: ${error.message}`;
