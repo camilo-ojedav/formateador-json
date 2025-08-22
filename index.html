@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formateador de JSON</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Highlight.js theme for syntax highlighting (atom-one-dark) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Simple scrollbar styling for a better look in WebKit browsers */
+        textarea::-webkit-scrollbar, pre::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        textarea::-webkit-scrollbar-track, pre::-webkit-scrollbar-track {
+            background: #1f2937; /* gray-800 */
+        }
+        textarea::-webkit-scrollbar-thumb, pre::-webkit-scrollbar-thumb {
+            background-color: #4b5563; /* gray-600 */
+            border-radius: 4px;
+        }
+        textarea::-webkit-scrollbar-thumb:hover, pre::-webkit-scrollbar-thumb:hover {
+            background-color: #6b7280; /* gray-500 */
+        }
+        /* Ensure the background of the code block matches the highlight.js theme */
+        #json-output {
+            background-color: #282c34; /* atom-one-dark background */
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 flex flex-col items-center min-h-screen p-4 sm:p-6">
+
+    <div class="w-full max-w-7xl mx-auto flex flex-col h-screen">
+        <!-- Header Section -->
+        <header class="text-center mb-6 flex-shrink-0">
+            <h1 class="text-3xl sm:text-4xl font-bold text-white">Formateador de JSON</h1>
+            <p class="text-gray-400 mt-2">Pega tu JSON en la izquierda para verlo formateado y coloreado a la derecha.</p>
+        </header>
+
+        <!-- Error Message Box -->
+        <div id="error-message" class="hidden bg-red-800 border border-red-600 text-red-200 px-4 py-3 rounded-lg relative mb-4 flex-shrink-0" role="alert">
+            <strong class="font-bold">¡Error!</strong>
+            <span class="block sm:inline ml-2" id="error-text">Tu JSON no es válido.</span>
+        </div>
+
+        <!-- Main Content: Input and Output panels -->
+        <main class="grid grid-cols-1 md:grid-cols-2 gap-6 flex-grow min-h-0">
+            <!-- Input JSON Panel -->
+            <div class="flex flex-col h-full">
+                <label for="json-input" class="text-lg font-semibold mb-2 text-gray-300">JSON de Entrada</label>
+                <textarea
+                    id="json-input"
+                    class="w-full h-full p-4 bg-gray-800 border border-gray-700 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                    placeholder='{ "ejemplo": "pega tu json aquí", "valor": true, "numero": 123, "lista": [1, 2, 3] }'
+                    spellcheck="false"
+                    aria-label="Entrada de JSON"
+                ></textarea>
+            </div>
+
+            <!-- Formatted JSON Output Panel -->
+            <div class="flex flex-col h-full">
+                 <label for="json-output" class="text-lg font-semibold mb-2 text-gray-300">JSON Formateado</label>
+                <pre id="json-output" class="w-full h-full p-4 border border-gray-700 rounded-lg overflow-auto text-sm" aria-live="polite"><code class="language-json"></code></pre>
+            </div>
+        </main>
+    </div>
+
+    <!-- Highlight.js library for syntax highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+        // Get references to the DOM elements
+        const jsonInput = document.getElementById('json-input');
+        const jsonOutputCode = document.querySelector('#json-output code');
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+
+        /**
+         * Parses, formats, and syntax-highlights the JSON from the input textarea.
+         * Updates the output panel or shows an error message.
+         */
+        const formatJson = () => {
+            const rawJson = jsonInput.value;
+
+            // If input is empty, clear the output and hide any errors
+            if (rawJson.trim() === '') {
+                jsonOutputCode.textContent = '';
+                errorMessage.classList.add('hidden');
+                return;
+            }
+
+            try {
+                // 1. Parse the string into a JavaScript object.
+                const parsedJson = JSON.parse(rawJson);
+                // 2. Stringify the object back to a formatted string.
+                const formattedJson = JSON.stringify(parsedJson, null, 2);
+                
+                // 3. Set the text content of the code block. This escapes any HTML within the JSON values.
+                jsonOutputCode.textContent = formattedJson;
+
+                // 4. Apply syntax highlighting using highlight.js
+                hljs.highlightElement(jsonOutputCode);
+                
+                // 5. Ensure the error message is hidden on success.
+                errorMessage.classList.add('hidden');
+            } catch (error) {
+                // If JSON.parse() fails, catch the error.
+                jsonOutputCode.textContent = '// Tu JSON formateado aparecerá aquí...'; // Clear output on error
+                // Display the specific error message to the user.
+                errorText.textContent = `Error en el JSON: ${error.message}`;
+                errorMessage.classList.remove('hidden');
+            }
+        };
+
+        // Add an 'input' event listener to format the JSON in real-time as the user types.
+        jsonInput.addEventListener('input', formatJson);
+
+        // Run the function once on load in case the browser has cached content in the textarea.
+        formatJson();
+    </script>
+
+</body>
+</html>
